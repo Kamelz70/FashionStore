@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -47,6 +48,12 @@ const userSchema = new mongoose.Schema({
     passwordChangedAt: {
         type: Date,
     },
+    role: {
+        type: String,
+        trim: true,
+        enum: ['user', 'admin'],
+        default: 'user',
+    },
     passwordResetToken: String,
     passwordResetExpiry: Date,
     active: {
@@ -82,6 +89,31 @@ userSchema.pre(/^find/, function (next) {
 ////////////////////////////////////////////////////////////////
 userSchema.methods.correctPassword = async function (candidatePass, userPass) {
     return await bcrypt.compare(candidatePass, userPass);
+};
+
+userSchema.methods.passwordChangedAfter = function (date) {
+    if (this.passwordChangedAt) {
+        //convert to millisecs with gettime, then get seconds and parse to int
+        const passwordDate = parseInt(
+            this.passwordChangedAt.getTime() / 1000,
+            10
+        );
+        return passwordDate > date;
+    }
+    return false;
+};
+
+userSchema.methods.generatePasswordResetToken = function () {
+    const token = crypto.randomBytes(32).toString('hex');
+    this.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(token)
+        .digest('hex');
+    //10 mins expiry
+    this.passwordResetExpiry =
+        Date.now() + process.env.PASSWORD_RESET_EXPIRY_MINS * 60 * 1000;
+    return token;
+    //Even after modifying the doc, it still needs .save()
 };
 const User = mongoose.model('User', userSchema);
 module.exports = User;
