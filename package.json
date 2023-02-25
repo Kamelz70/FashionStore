@@ -20,6 +20,7 @@
     "nodemailer": "^6.9.1",
     "prettier": "^2.8.4",
     "pug": "^3.0.2",
+    "validate-phone-number-node-js": "^0.0.1",
     "validator": "^13.9.0"
   },
   "devDependencies": {

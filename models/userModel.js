@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const validatePhoneNumber = require('validate-phone-number-node-js');
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -60,6 +62,26 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
         select: false,
+    },
+    phoneNumbers: {
+        type: [String],
+        validate: {
+            validator: function (list) {
+                var flag = 0;
+                list.forEach((num) => {
+                    if (!validatePhoneNumber.validate(num)) {
+                        flag = 1;
+                    }
+                });
+                return flag ? false : true;
+            },
+            message: 'phone number invalid',
+        },
+    },
+    cart: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cart',
+        required: true,
     },
 });
 /////////////// Document middleware .save,.create

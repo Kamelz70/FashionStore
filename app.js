@@ -1,7 +1,10 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const GlobalErrorHandler = require('./controllers/errorController');
 const usersRouter = require('./routers/usersRouter');
+const productRouter = require('./routers/productRouter');
+const stockItemRouter = require('./routers/stockItemRouter');
 const app = express();
 app.use(
     express.json({
@@ -21,6 +24,8 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/products', productRouter);
+app.use('/api/v1/stockItems', stockItemRouter);
 
 app.all('*', (req, res) => {
     res.status(404).json({
@@ -29,5 +34,7 @@ app.all('*', (req, res) => {
     // const err =
     //     next(err);
 });
+//error handling middleware (has 4 parameters)
+app.use(GlobalErrorHandler);
 
 module.exports = app;

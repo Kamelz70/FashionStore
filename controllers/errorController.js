@@ -52,13 +52,13 @@ module.exports = (err, req, res, next) => {
     } else {
         let error = { ...err };
         error.message = err.message;
-        if (err.name === MongoCastError) {
+        if (err.name === 'MongoCastError') {
             error = HandleCastError(error);
         }
         if (err.code === 11000) {
             error = HandleDuplicateFieldError(error);
         }
-        if (err.name === MongoValidationError) {
+        if (err.name === 'MongoValidationError') {
             error = HandleValidationError(error);
         }
         if (err.name === 'JsonWebTokenError') {
