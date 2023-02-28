@@ -5,6 +5,7 @@ const GlobalErrorHandler = require('./controllers/errorController');
 const usersRouter = require('./routers/usersRouter');
 const productRouter = require('./routers/productRouter');
 const stockItemRouter = require('./routers/stockItemRouter');
+const testRouter = require('./routers/testRouter');
 const app = express();
 app.use(
     express.json({
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/stockItems', stockItemRouter);
+app.use('/api/v1/test', testRouter);
 
 app.all('*', (req, res) => {
     res.status(404).json({

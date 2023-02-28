@@ -3,6 +3,9 @@ const stockItemController = require('../controllers/stockItemController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
+// middleware to capitalize fields of item
+// router.use(stockItemController.capitalizeFields('color', 'size', 'model'));
+
 //no authorization needed at this point
 router.route('/:id').get(stockItemController.getStockItem);
 //after this point all router need authorization
