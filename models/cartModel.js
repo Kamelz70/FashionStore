@@ -16,6 +16,11 @@ const cartSchema = new mongoose.Schema({
         min: [0, 'Minimum amount is 1'],
         max: [200000, 'Maximum rating is 200000'],
     },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
 });
 /////////////// Document middleware .save,.create
 

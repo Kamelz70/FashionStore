@@ -93,21 +93,21 @@ stockItemSchema.statics.setProductStockItemList = async function (productDoc) {
 };
 ///////////////////////////     middleqare
 
-///TODO: FIX BUG:createMany stockItems makes parallel saves to product, creates inconsistent versions
+///FIXME :createMany stockItems makes parallel saves to product, creates inconsistent versions
 
 stockItemSchema.index({
     product: 1,
 });
 // Deleting a stockItem deletes its' ID from product parent
-stockItemSchema.pre(/([D|d]elete|[R|r]emove)/, async function (next) {
+stockItemSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
     // query middleware getQuery gets query
     const thisDoc = await StockItem.findOne(this.getQuery());
     if (!thisDoc) {
-        next();
+        return next();
     }
     let productDoc = await Product.findById(thisDoc.product);
     if (!productDoc) {
-        next();
+        return next();
     }
     productDoc = await StockItem.setProductAttributeList(
         productDoc,

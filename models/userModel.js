@@ -3,6 +3,8 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const validatePhoneNumber = require('validate-phone-number-node-js');
+const Cart = require('./cartModel');
+const AppError = require('../utils/appError');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -82,8 +84,13 @@ const userSchema = new mongoose.Schema({
     cart: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Cart',
-        required: true,
     },
+    addresses: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Address',
+        },
+    ],
 });
 /////////////// Document middleware .save,.create
 userSchema.pre('save', async function (next) {
@@ -103,12 +110,39 @@ userSchema.pre('save', async function (next) {
     this.passwordChangedAt = Date.now() - 1000;
     next();
 });
+
+userSchema.pre('save', async function (next) {
+    // create cart id user has none or is new
+    if (this.isNew || !this.cart) {
+        const cart = await Cart.create({ user: this.id });
+
+        if (!cart) {
+            return next(new AppError("couldn't create cart for user", 500));
+        }
+        this.cart = cart.id;
+    }
+    next();
+});
 //////////////////////////////////
 userSchema.pre(/^find/, function (next) {
     this.find({ active: { $ne: false } });
     next();
 });
 
+///////////////////// Deleting a user deletes his Cart
+userSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
+    // query middleware getQuery gets query
+    const thisDoc = await User.findOne(this.getQuery());
+    if (!thisDoc) {
+        return next();
+    }
+    let cartDoc = await Cart.findByIdAndDelete(thisDoc.cart);
+    if (!cartDoc) {
+        return next();
+    }
+
+    next();
+});
 ////////////////////////////////////////////////////////////////
 userSchema.methods.correctPassword = async function (candidatePass, userPass) {
     return await bcrypt.compare(candidatePass, userPass);
