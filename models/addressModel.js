@@ -63,9 +63,13 @@ const addressSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    createdAt: { type: Date, default: Date.now() },
 });
 /////////////// Document middleware .save,.create
 
+addressSchema.index({
+    user: 1,
+});
 addressSchema.pre('save', async function (next) {
     // create cart id user has none or is new
     if (this.isNew) {

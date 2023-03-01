@@ -10,10 +10,21 @@ router
     .route('/myAddresses')
     .get(addressController.getMyAdresses)
     .post(addressController.attatchUserToBody, addressController.createAddress);
+
+router
+    .route('/myAddresses/:id')
+    .patch(
+        addressController.checkUserOwnsAddress,
+        addressController.updateAddress
+    );
+
 //after this point all router require admin role
 router.use(authController.restrictTo('admin'));
 
-router.route('/:id').get(addressController.getAddressById);
+router
+    .route('/:id')
+    .get(addressController.getAddressById)
+    .patch(addressController.updateAddress);
 router.route('/').get(addressController.getAllAddresses);
 
 module.exports = router;

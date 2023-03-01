@@ -116,8 +116,8 @@ exports.protect = catchAsync(async (req, res, next) => {
         process.env.JWT_SECRET_KEY
     );
     //3)verify user still exits
-
-    const user = await User.findById(decodedJWT.id);
+    //deselect addresses from user
+    const user = await User.findById(decodedJWT.id).select('-addresses');
     if (!user) {
         return next(new AppError("User doesn't exist anymore", 401));
     }

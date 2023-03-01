@@ -9,17 +9,31 @@ exports.attatchUserToBody = (req, res, next) => {
     req.body.user = req.user.id;
     next();
 };
+// middleware to check if a user owns the passed address
+exports.checkUserOwnsAddress = catchAsync(async (req, res, next) => {
+    const address = await Address.findById(req.params.id);
+    if (!address) {
+        return next(new AppError('no address with such ID', 403));
+    }
+    //if address's user id isn't of requesting user
+    if (!(address.user == req.user.id)) {
+        return next(
+            new AppError("user doesn't own address, cannot modify", 404)
+        );
+    }
+    next();
+});
 
 exports.getAllAddresses = handlerFactory.getAll(Address);
 exports.getAddressById = handlerFactory.getOne(Address);
 exports.createAddress = handlerFactory.createOne(Address);
-//FIXME:not working properly
+exports.updateAddress = handlerFactory.updateOne(Address);
 exports.getMyAdresses = catchAsync(async (req, res, next) => {
     //use protect middleware in router to access user
     //find addresses in address list from user
-    //TODO: make parent referencing only with addresses
+    //TODO: make parent referencing only with addresses or select -addresses
     let addresses = await Address.find({
-        _id: { $in: req.user.addresses },
+        user: req.user.id,
     });
 
     if (!addresses) {
