@@ -3,6 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const Product = require('./productModel');
+const AppError = require('../utils/appError');
 ///////////////////////////     Schema
 const stockItemSchema = new mongoose.Schema({
     //amount: virtual
@@ -70,7 +71,6 @@ stockItemSchema.statics.setProductAttributeList = async function (
         updateQueryValues[attribute] = attributeValueList;
     }
     //save into DB
-    console.log(updateQueryValues);
     for (let key in updateQueryValues) {
         productDoc[key] = updateQueryValues[key];
     }
@@ -93,19 +93,48 @@ stockItemSchema.statics.setProductStockItemList = async function (productDoc) {
 };
 ///////////////////////////     middleqare
 
-///TODO: createMany crashes
-///TODO: add product index
+///TODO: FIX BUG:createMany stockItems makes parallel saves to product, creates inconsistent versions
 
+stockItemSchema.index({
+    product: 1,
+});
+// Deleting a stockItem deletes its' ID from product parent
+stockItemSchema.pre(/([D|d]elete|[R|r]emove)/, async function (next) {
+    // query middleware getQuery gets query
+    const thisDoc = await StockItem.findOne(this.getQuery());
+    if (!thisDoc) {
+        next();
+    }
+    let productDoc = await Product.findById(thisDoc.product);
+    if (!productDoc) {
+        next();
+    }
+    productDoc = await StockItem.setProductAttributeList(
+        productDoc,
+        'colors',
+        'sizes'
+    );
+    productDoc = await thisDoc.constructor.setProductStockItemList(productDoc);
+    console.log('productDoc:    ', productDoc);
+
+    productDoc.save();
+    next();
+});
 ////////////////////////////////////////////////////////////////
 stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
+    if (!doc) {
+        return;
+    }
     let productDoc = await Product.findById(doc.product);
+    if (!productDoc) {
+        return;
+    }
     productDoc = await doc.constructor.setProductAttributeList(
         productDoc,
         'colors',
         'sizes'
     );
     productDoc = await doc.constructor.setProductStockItemList(productDoc);
-    console.log('productDoc:    ');
     productDoc.save();
 });
 

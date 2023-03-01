@@ -52,6 +52,7 @@ const productSchema = new mongoose.Schema({
         min: 0,
         max: [200000, 'Product price cannot exceed 200000 pounds'],
     },
+    createdAt: { type: Date, default: Date.now() },
 });
 /////////////// Document middleware .save,.create
 
