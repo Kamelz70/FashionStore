@@ -3,7 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const Product = require('./productModel');
-
+///////////////////////////     Schema
 const stockItemSchema = new mongoose.Schema({
     //amount: virtual
     quantity: {
@@ -12,8 +12,8 @@ const stockItemSchema = new mongoose.Schema({
         min: 0,
         max: 200000,
     },
-    size: String,
-    color: String,
+    size: { type: String, uppercase: true },
+    color: { type: String, uppercase: true },
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
@@ -35,46 +35,79 @@ const stockItemSchema = new mongoose.Schema({
         max: 200000,
     },
 });
-stockItemSchema.statics.setProductAttributeList = async function (productId) {
-    const colorList = await this.aggregate([
-        {
-            $match: {
-                product: productId,
+///////////////////////////     static methods
+
+// gets fields which we will calculate its' different values in the product
+stockItemSchema.statics.setProductAttributeList = async function (
+    productDoc,
+    ...fields
+) {
+    //initialize the variable where we will set our values in
+    var updateQueryValues = {};
+    //
+    for (const attribute of fields) {
+        // pipeline which runs for each field
+        pipeline = [
+            {
+                $match: {
+                    product: productDoc._id,
+                },
             },
-        },
-        {
-            // group by tourId so that stats of all docs containing this id are grouped
-            $group: {
-                _id: '$color',
+            {
+                //group values of field whithout the last "s"
+                $group: {
+                    _id: `$${attribute.substring(0, attribute.length - 1)}`,
+                },
             },
-        },
-    ]);
-    const colors = colorList.map((el) => {
+        ];
+        //run the pipeline to get the values
+        var attributeValueList = await StockItem.aggregate(pipeline);
+        //remove the ids
+        attributeValueList = attributeValueList.map((el) => {
+            return el['_id'];
+        });
+        //save in our variable
+        updateQueryValues[attribute] = attributeValueList;
+    }
+    //save into DB
+    console.log(updateQueryValues);
+    for (let key in updateQueryValues) {
+        productDoc[key] = updateQueryValues[key];
+    }
+    return productDoc;
+    // await Product.findByIdAndUpdate(productId, updateQueryValues);
+};
+
+stockItemSchema.statics.setProductStockItemList = async function (productDoc) {
+    //run the pipeline to get the values
+    var stockItemList = await StockItem.find({
+        product: productDoc._id,
+    }).select('_id');
+    //remove the ids
+    stockItemList = stockItemList.map((el) => {
         return el['_id'];
     });
-
-    await Product.findByIdAndUpdate(productId, {
-        colors: colors,
-    });
+    productDoc.stockItems = stockItemList;
+    return productDoc;
+    // await Product.findByIdAndUpdate(productId, updateQueryValues);
 };
-/////////////// Document middleware .save,.create
-//TODO : Adding stock item adds to colors and sizes list
-//TODO : deleting product deletes stock item
-//////////////
-//////////////////////////////////
-stockItemSchema.pre('save', function (next) {
-    this.color = this.color.toUpperCase();
-    this.size = this.size.toUpperCase();
-    next();
-});
-stockItemSchema.post('save', function (doc) {
-    //doc.constructor calls the model cunstructor to use the static method
-    // post middleware takes doc as input, use it to get the model
-    doc.constructor.setProductAttributeList(doc.product);
-});
+///////////////////////////     middleqare
+
+///TODO: createMany crashes
+///TODO: add product index
+
 ////////////////////////////////////////////////////////////////
-stockItemSchema.pre(/^findOneAnd/, function (next) {
-    next();
+stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
+    let productDoc = await Product.findById(doc.product);
+    productDoc = await doc.constructor.setProductAttributeList(
+        productDoc,
+        'colors',
+        'sizes'
+    );
+    productDoc = await doc.constructor.setProductStockItemList(productDoc);
+    console.log('productDoc:    ');
+    productDoc.save();
 });
+
 const StockItem = mongoose.model('StockItem', stockItemSchema);
 module.exports = StockItem;

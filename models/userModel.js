@@ -65,6 +65,7 @@ const userSchema = new mongoose.Schema({
     },
     phoneNumbers: {
         type: [String],
+        trim: true,
         validate: {
             validator: function (list) {
                 var flag = 0;

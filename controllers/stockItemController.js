@@ -4,15 +4,15 @@ const handlerFactory = require('./handlerFactory');
 const AppError = require('../utils/appError');
 ////////////////////////////////
 // Middleware
-exports.capitalizeFields =
-    (...fields) =>
-    (req, res, next) => {
-        fields.forEach((field) => {
-            if (req.body[field])
-                req.body[field] = req.body[field].toUpperCase();
-        });
-        next();
-    };
+// exports.capitalizeFields =
+//     (...fields) =>
+//     (req, res, next) => {
+//         fields.forEach((field) => {
+//             if (req.body[field])
+//                 req.body[field] = req.body[field].toUpperCase();
+//         });
+//         next();
+//     };
 /////////////////////////////
 // req controllers
 exports.createStockItem = catchAsync(async (req, res, next) => {

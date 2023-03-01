@@ -1,11 +1,16 @@
 const AppError = require('../utils/appError');
+const APIFeatures = require('../utils/APIFeatures');
 const catchAsync = require('../utils/catchAsync');
 
 exports.getAll = (Model) =>
     catchAsync(async (req, res, next) => {
         // still needs pagination.....
-
-        const docs = await Model.find({});
+        features = new APIFeatures(Model.find({}), req.query)
+            .filter()
+            .paginate()
+            .sort()
+            .limitFields();
+        const docs = await features.query;
         res.status(200).json({
             status: 'success',
             requetedAt: res.requestTime,

@@ -23,8 +23,8 @@ const oderItemSchema = new mongoose.Schema({
         default: 1,
         max: 100,
     },
-    size: String,
-    color: String,
+    size: { type: String, uppercase: true, trim: true },
+    color: { type: String, uppercase: true, trim: true },
     stockItem: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'stockItem',

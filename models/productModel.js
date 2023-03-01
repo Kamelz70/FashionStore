@@ -9,20 +9,24 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, 'A product must have a title'],
         unique: true,
+        trim: true,
     },
     model: {
         type: String,
         // required: [true, 'A product must have a title'],
         unique: true,
+        uppercase: true,
+        trim: true,
     },
     description: {
         type: String,
+        trim: true,
         // required: [true, 'A product must have a description'],
     },
 
     //TODO : Add images,
-    sizes: [String],
-    colors: [String],
+    sizes: [{ type: String, uppercase: true, trim: true }],
+    colors: [{ type: String, uppercase: true, trim: true }],
     stockItems: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -55,6 +59,10 @@ const productSchema = new mongoose.Schema({
 //////////////////////////////////
 
 ////////////////////////////////////////////////////////////////
-
+// stockItemSchema.pre(/delete/, function (next) {
+//     console.log('deleting');
+//     this.stockItems()
+//     next();
+// });
 const StockItem = mongoose.model('Product', productSchema);
 module.exports = StockItem;
