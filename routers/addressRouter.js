@@ -16,6 +16,10 @@ router
     .patch(
         addressController.checkUserOwnsAddress,
         addressController.updateAddress
+    )
+    .delete(
+        addressController.checkUserOwnsAddress,
+        addressController.deleteAddress
     );
 
 //after this point all router require admin role

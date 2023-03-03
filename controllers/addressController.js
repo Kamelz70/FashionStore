@@ -28,6 +28,8 @@ exports.getAllAddresses = handlerFactory.getAll(Address);
 exports.getAddressById = handlerFactory.getOne(Address);
 exports.createAddress = handlerFactory.createOne(Address);
 exports.updateAddress = handlerFactory.updateOne(Address);
+exports.deleteAddress = handlerFactory.deleteOne(Address);
+
 exports.getMyAdresses = catchAsync(async (req, res, next) => {
     //use protect middleware in router to access user
     //find addresses in address list from user

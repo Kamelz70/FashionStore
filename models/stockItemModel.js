@@ -115,7 +115,6 @@ stockItemSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
         'sizes'
     );
     productDoc = await thisDoc.constructor.setProductStockItemList(productDoc);
-    console.log('productDoc:    ', productDoc);
 
     productDoc.save();
     next();

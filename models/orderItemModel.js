@@ -2,29 +2,15 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-
+const StockItem = require('./stockItemModel');
+// TODO :create the model
 const oderItemSchema = new mongoose.Schema({
-    cartItems: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'OrderItem',
-        },
-    ],
-    amount: {
-        type: Number,
-        required: [true, 'An Order Item must have an amount'],
-        min: 0,
-        max: 200000,
-    },
     quantity: {
         type: Number,
-        ref: 'OrderItem',
         min: 0,
         default: 1,
         max: 100,
     },
-    size: { type: String, uppercase: true, trim: true },
-    color: { type: String, uppercase: true, trim: true },
     stockItem: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'stockItem',
@@ -34,6 +20,10 @@ const oderItemSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
         required: [true, 'An Order Item must have a product parent'],
+    },
+    cart: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cart',
     },
 });
 /////////////// Document middleware .save,.create
