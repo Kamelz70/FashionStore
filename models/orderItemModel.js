@@ -3,27 +3,53 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const StockItem = require('./stockItemModel');
-// TODO :create the model
-const oderItemSchema = new mongoose.Schema({
+const Product = require('./productModel');
+//TODO:remodel
+const orderItemSchema = new mongoose.Schema({
     quantity: {
         type: Number,
-        min: 0,
+        min: 1,
         default: 1,
         max: 100,
     },
     stockItem: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'stockItem',
-        required: [true, 'An Order Item must have a stock item parent'],
+        type: StockItem.schema,
+        validate: {
+            validator: async function (value) {
+                // if no mods done to stockItem, return
+                if (!this.isModified('stockItem')) {
+                    return true;
+                }
+                // else check stockItem
+                const stockItem = await StockItem.findById(value.id);
+                if (!stockItem) {
+                    return false;
+                }
+                return true;
+            },
+            message: "stockItem id doesn't exist",
+            required: [true, 'An Order Item must have a stockItem parent'],
+        },
     },
     product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
+        type: Product.schema,
         required: [true, 'An Order Item must have a product parent'],
-    },
-    cart: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Cart',
+        validate: {
+            validator: async function (value) {
+                // if no mods done to product, return
+                if (!this.isModified('product')) {
+                    return true;
+                }
+                // else check product
+                const product = await Product.findById(value.id);
+                if (!product) {
+                    return false;
+                }
+                return true;
+            },
+            message: "product id doesn't exist",
+            required: [true, 'An Order Item must have a product parent'],
+        },
     },
 });
 /////////////// Document middleware .save,.create
@@ -33,5 +59,5 @@ const oderItemSchema = new mongoose.Schema({
 
 ////////////////////////////////////////////////////////////////
 
-const OderItem = mongoose.model('OderItem', cartSchema);
+const OderItem = mongoose.model('OderItem', orderItemSchema);
 module.exports = OderItem;

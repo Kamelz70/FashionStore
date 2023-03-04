@@ -1,15 +1,7 @@
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const handlerFactory = require('./handlerFactory');
-const filterObj = (Obj, ...fields) => {
-    const filteredObj = {};
-    Object.keys(Obj).forEach((el) => {
-        if (fields.includes(el)) {
-            filteredObj[el] = Obj[el];
-        }
-    });
-    return filteredObj;
-};
+const filterObj = require('../utils/filtering.js');
 //works as middleware
 exports.getMe = (req, res, next) => {
     req.params.id = req.user.id;

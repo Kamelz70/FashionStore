@@ -21,6 +21,11 @@ const stockItemSchema = new mongoose.Schema({
         required: [true, 'A stock item must have a product parent'],
         validate: {
             validator: async function (value) {
+                // if no mods done to product, return
+                if (!this.isModified('product')) {
+                    return true;
+                }
+                // else check product
                 const prod = await Product.findById(value);
                 if (!prod) {
                     return false;
@@ -134,6 +139,7 @@ stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
         'sizes'
     );
     productDoc = await doc.constructor.setProductStockItemList(productDoc);
+
     productDoc.save();
 });
 

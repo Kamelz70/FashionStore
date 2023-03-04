@@ -64,6 +64,11 @@ const addressSchema = new mongoose.Schema({
         required: true,
         validate: {
             validator: async function (value) {
+                // if no mods done to user, return
+                if (!this.isModified('user')) {
+                    return true;
+                }
+                // else check user
                 const user = await User.findById(value);
                 if (!user) {
                     return false;

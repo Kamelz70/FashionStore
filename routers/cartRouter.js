@@ -7,7 +7,10 @@ const router = express.Router();
 
 //after this point all routes need authentication
 router.use(authController.protect);
-router.route('/myCart').get(cartController.getMyCart);
+router
+    .route('/myCart')
+    .get(cartController.getMyCart)
+    .post(cartController.addItemToCart);
 
 //after this point all router require admin role
 router.use(authController.restrictTo('admin'));
