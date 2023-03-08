@@ -11,7 +11,6 @@ exports.getCart = handlerFactory.getOne(Cart);
 exports.getMyCart = catchAsync(async (req, res, next) => {
     //use protect middleware in router to access user
 
-    console.log(req.user);
     const cart = await Cart.findById(req.user.cart);
     if (!cart) {
         return next(new AppError('no cart with such ID found', 404));
@@ -26,31 +25,64 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
     if (!cart) {
         return next(new AppError('cart ID not found', 404));
     }
-    // check if req.body.stockItem exists
-    //if item already exists in cart
-    let flag = 0;
-    for (const item in cart.cartItems) {
-        if (cart.cartItems[item].stockItem.id == req.body.stockItem) {
-            flag = 1;
-            cart.cartItems[item].quantity++;
-            await cart.save({});
-            break;
-        }
-    }
-    if (flag == 1) {
-        return res.status(200).json({ status: 'success', data: cart });
-    }
-    // else create new orderItem
     const stockItem = await StockItem.findById(req.body.stockItem);
     //check if stockItem id exists
     if (!stockItem) {
         return next(new AppError('stock item ID not found', 404));
     }
+    //check if stock is empty
+    if (stockItem.quantity < 1) {
+        return next(
+            new AppError(
+                `Can't add item,no items left in stock
+        `,
+                409
+            )
+        );
+    }
+
     const product = await Product.findById(stockItem.product);
-    cart.cartItems.push(
-        new OrderItem({ stockItem: stockItem, product: product })
-    );
+    if (!product) {
+        return next(new AppError('product ID not found', 404));
+    }
+    // check if req.body.stockItem exists
+    //if item already exists in cart
+    for (const item in cart.cartItems) {
+        if (cart.cartItems[item].stockItem.id == req.body.stockItem) {
+            flag = 1;
+            cart.cartItems[item].stockItem = stockItem;
+            // if req.body has a quantity field, edit
+            // TODO:check if quantity is a number
+            if (req.body.quantity) {
+                cart.cartItems[item].quantity = req.body.quantity;
+            } else {
+                cart.cartItems[item].quantity++;
+            }
+            // check if new quatity is larger than stock
+            if (stockItem.quantity < cart.cartItems[item].quantity) {
+                // set quantity same as stock
+                cart.cartItems[item].quantity = stockItem.quantity;
+                await cart.save({ validateBeforeSave: false });
+                // respond with status code of refresh
+                return res.status(200).json({ status: 'success', data: cart });
+            }
+            await cart.save({ validateBeforeSave: false });
+            return res.status(200).json({ status: 'success', data: cart });
+        }
+    }
+
+    // else create new orderItem
+    const orderItem = new OrderItem({
+        stockItem: stockItem,
+        product: product,
+        quantity: req.body.quantity ? req.body.quantity : 1,
+    });
+    // check if quantity is more than stock
+    if (orderItem.quantity > stockItem.quantity) {
+        orderItem.quantity = stockItem.quantity;
+    }
+    cart.cartItems.push(orderItem);
     await cart.save({ validateBeforeSave: false });
     res.status(201).json({ status: 'success', data: cart });
-    // use cartID, oderID,
+    // use cartID, orderID,
 });

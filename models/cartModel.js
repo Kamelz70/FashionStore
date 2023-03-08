@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const StockItem = require('./stockItemModel');
 const cartSchema = new mongoose.Schema({
-    cartItems: [OrderItem.schema],
+    cartItems: [{ type: OrderItem.schema, default: [] }],
     totalAmount: {
         type: Number,
         default: 0,

@@ -28,8 +28,8 @@ const orderItemSchema = new mongoose.Schema({
                 return true;
             },
             message: "stockItem id doesn't exist",
-            required: [true, 'An Order Item must have a stockItem parent'],
         },
+        required: [true, 'An Order Item must have a stockItem parent'],
     },
     product: {
         type: Product.schema,
@@ -47,9 +47,9 @@ const orderItemSchema = new mongoose.Schema({
                 }
                 return true;
             },
-            message: "product id doesn't exist",
-            required: [true, 'An Order Item must have a product parent'],
         },
+        message: "product id doesn't exist",
+        required: [true, 'An Order Item must have a product parent'],
     },
 });
 /////////////// Document middleware .save,.create
@@ -59,5 +59,5 @@ const orderItemSchema = new mongoose.Schema({
 
 ////////////////////////////////////////////////////////////////
 
-const OderItem = mongoose.model('OderItem', orderItemSchema);
-module.exports = OderItem;
+const OrderItem = mongoose.model('OrderItem', orderItemSchema);
+module.exports = OrderItem;
