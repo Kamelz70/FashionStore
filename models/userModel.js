@@ -113,13 +113,14 @@ userSchema.pre('save', async function (next) {
 
 userSchema.pre('save', async function (next) {
     // create cart id user has none or is new
-    if (this.isNew || !this.cart) {
-        const cart = await Cart.create({ user: this.id });
 
-        if (!cart) {
-            return next(new AppError("couldn't create cart for user", 500));
-        }
-        this.cart = cart.id;
+    if (this.isNew || !this.cart) {
+        //FIXME: cart circular dep
+        // const cart = await Cart.create({ user: this.id });
+        // if (!cart) {
+        //     return next(new AppError("couldn't create cart for user", 500));
+        // }
+        // this.cart = cart.id;
     }
     next();
 });

@@ -18,7 +18,7 @@ exports.getMyCart = catchAsync(async (req, res, next) => {
 
     res.status(200).json({ status: 'success', data: cart });
 });
-//TODO:check with middleware if stockItem exists in body for faster performance on wrong reqs
+
 exports.addItemToCart = catchAsync(async (req, res, next) => {
     let cart = await Cart.findById(req.user.cart);
     //if cart not found
@@ -49,6 +49,7 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
                 cart.cartItems[item].quantity++;
             }
             //else save new quantity
+            //TODO:fix validation
             await cart.save({ validateBeforeSave: false });
             return res.status(200).json({ status: 'success', data: cart });
         }
@@ -59,7 +60,6 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
         stockItem: { _id: stockItem.id },
         quantity: req.body.quantity || 1,
     });
-
     cart.cartItems.push(orderItem);
     await cart.save({ validateBeforeSave: false });
     res.status(201).json({ status: 'success', data: cart });

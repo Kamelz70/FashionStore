@@ -37,7 +37,7 @@ const orderSchema = new mongoose.Schema({
         },
         required: [true, 'An Order must have an address'],
     },
-    date: { type: Date, default: Date.now() },
+    createdAt: { type: Date, default: Date.now() },
     phoneNumber: {
         type: String,
     },
@@ -69,13 +69,14 @@ const orderSchema = new mongoose.Schema({
         },
     ],
 });
-//TODO: reset stockitems if price changed
 orderSchema.pre('save', async function (next) {
     //to check in post middleware if it's new
     this.wasNew = this.isNew;
     //set order date
     console.log('pre save order');
-    this.date = Date.now();
+    if (this.isNew) {
+        this.createdAt = Date.now();
+    }
     let amount = 0;
     //set order amount
     this.orderItems.forEach((item) => {

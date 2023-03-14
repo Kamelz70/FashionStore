@@ -26,7 +26,7 @@ const addressSchema = new mongoose.Schema({
         type: String,
         trim: true,
         required: true,
-        minLength: 4,
+        minLength: 3,
     },
     buildingNum: {
         type: String,
@@ -69,7 +69,7 @@ const addressSchema = new mongoose.Schema({
                     return true;
                 }
                 // else check user
-                const user = await User.findById(value);
+                const user = await User.findById(value).select('id');
                 if (!user) {
                     return false;
                 }
@@ -86,38 +86,34 @@ addressSchema.index({
     user: 1,
 });
 /////////////////////////////
-addressSchema.statics.setUserAddressList = async function (userDoc) {
+addressSchema.statics.getUserAddressList = async function (userId) {
     //get all addresses which references the user
     var addressList = await Address.find({
-        user: userDoc._id,
+        user: userId,
     }).select('_id');
     //make only addresses in the array
     addressList = addressList.map((el) => {
         return el['_id'];
     });
-    // assign the user his addresses
-    userDoc.addresses = addressList;
     //return modified user document
-    return userDoc;
+    return addressList;
 };
 /////////////////////////////
 ///////////////////// Saving address rechecks user's addresses list
 
 addressSchema.pre('save', async function (next) {
     // create cart id user has none or is new
-
-    if (this.isNew) {
-        let user = await User.findById(this.user);
-        if (!user) {
-            return next(
-                new AppError("couldn't find user to save address' id into", 404)
-            );
-        }
-        user = await this.constructor.setUserAddressList(user);
-        user.save({ validateBeforeSave: false });
-    }
+    this.wasNew = this.isNew;
     next();
 });
+addressSchema.post(/(save)/, async function (doc) {
+    if (this.wasNew) {
+        const addressList = await doc.constructor.getUserAddressList(doc.user);
+        // set stockItems in product
+        await User.findByIdAndUpdate(doc.user, { addresses: addressList });
+    }
+});
+
 ///////////////////// Saving address rechecks user's addresses list
 addressSchema.pre(/([D|d]elete|[R|r]emove)/, async function (next) {
     // create cart id user has none or is new
@@ -130,8 +126,8 @@ addressSchema.pre(/([D|d]elete|[R|r]emove)/, async function (next) {
     if (!user) {
         return next(new AppError("couldn't find user", 404));
     }
-    // call setUserAddressList above to recheck address list
-    user = await thisAddress.constructor.setUserAddressList(user);
+    // call getUserAddressList above to recheck address list
+    user = await thisAddress.constructor.getUserAddressList(user);
     // save modified user
     user.save({ validateBeforeSave: false });
     next();

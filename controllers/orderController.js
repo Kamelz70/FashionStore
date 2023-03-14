@@ -30,6 +30,13 @@ exports.placeOrder = catchAsync(async (req, res, next) => {
     //ckeck if user owns address (done in Model)
     //check if quantity is valid (done in model validate)
 
+    //recreate order items in case cart items are outdated (optional extra measure)
+    const orderItems = cart.cartItems.forEach((item) => {
+        return new OrderItem({
+            stockItem: { _id: item.stockItem.id },
+            quantity: item.quantity || 1,
+        });
+    });
     //Check phone Num
 
     const address = await Address.findById(req.body.address);
@@ -38,7 +45,7 @@ exports.placeOrder = catchAsync(async (req, res, next) => {
     }
     const order = new Order({
         user: req.user.id,
-        orderItems: cart.cartItems,
+        orderItems,
         address: address,
     });
     await order.save();

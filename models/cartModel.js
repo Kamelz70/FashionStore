@@ -34,6 +34,7 @@ const cartSchema = new mongoose.Schema({
         },
     },
 });
+//TODO:calc total cart Amount
 /////////////// Document middleware .save,.create
 
 //////////////

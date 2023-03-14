@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const StockItem = require('./stockItemModel');
 const Product = require('./productModel');
 const AppError = require('../utils/appError');
-//TODO:only pass stockItem id and quantity
+//only pass stockItem id and quantity
 const orderItemSchema = new mongoose.Schema({
     quantity: {
         type: Number,
@@ -69,12 +69,16 @@ orderItemSchema.pre('save', async function (next) {
     //if item isn't new, don't validate
 
     //validate stockItem
-    const stockItem = await StockItem.findById(this.stockItem.id);
+    const stockItem = await StockItem.findById(this.stockItem.id).select(
+        '_id size color product price'
+    );
     if (!stockItem) {
         return next(new AppError("stockItem parent id doesn't exist", 404));
     }
     //validate product
-    const product = await Product.findById(stockItem.product);
+    const product = await Product.findById(stockItem.product).select(
+        '_id title model description createdAt price'
+    );
     if (!product) {
         return next(new AppError("product parent id doesn't exist", 404));
     }

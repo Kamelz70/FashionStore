@@ -26,7 +26,7 @@ const stockItemSchema = new mongoose.Schema({
                     return true;
                 }
                 // else check product
-                const prod = await Product.findById(value);
+                const prod = await Product.findById(value).select('_id');
                 if (!prod) {
                     return false;
                 }
@@ -44,8 +44,9 @@ const stockItemSchema = new mongoose.Schema({
 ///////////////////////////     static methods
 
 // gets fields which we will calculate its' different values in the product
+//returns product attributes' map
 stockItemSchema.statics.setProductAttributeList = async function (
-    productDoc,
+    productId,
     ...fields
 ) {
     //initialize the variable where we will set our values in
@@ -56,7 +57,7 @@ stockItemSchema.statics.setProductAttributeList = async function (
         pipeline = [
             {
                 $match: {
-                    product: productDoc._id,
+                    product: productId,
                 },
             },
             {
@@ -75,30 +76,25 @@ stockItemSchema.statics.setProductAttributeList = async function (
         //save in our variable
         updateQueryValues[attribute] = attributeValueList;
     }
-    //save into DB
-    for (let key in updateQueryValues) {
-        productDoc[key] = updateQueryValues[key];
-    }
-    return productDoc;
+
+    return updateQueryValues;
     // await Product.findByIdAndUpdate(productId, updateQueryValues);
 };
 
-stockItemSchema.statics.setProductStockItemList = async function (productDoc) {
+//returns stockItem list for a product
+stockItemSchema.statics.setProductStockItemList = async function (productId) {
     //run the pipeline to get the values
     var stockItemList = await StockItem.find({
-        product: productDoc._id,
+        product: productId,
     }).select('_id');
     //remove the ids
     stockItemList = stockItemList.map((el) => {
         return el['_id'];
     });
-    productDoc.stockItems = stockItemList;
-    return productDoc;
+    return stockItemList;
     // await Product.findByIdAndUpdate(productId, updateQueryValues);
 };
 ///////////////////////////     middleqare
-
-///FIXME :createMany stockItems makes parallel saves to product, creates inconsistent versions
 
 stockItemSchema.index({
     product: 1,
@@ -110,18 +106,19 @@ stockItemSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
     if (!thisDoc) {
         return next();
     }
-    let productDoc = await Product.findById(thisDoc.product);
-    if (!productDoc) {
-        return next();
-    }
-    productDoc = await StockItem.setProductAttributeList(
-        productDoc,
-        'colors',
-        'sizes'
+    const productAttribueList =
+        await thisDoc.constructor.setProductAttributeList(
+            thisDoc.product,
+            'colors',
+            'sizes'
+        );
+    const stockItemList = await thisDoc.constructor.setProductStockItemList(
+        thisDoc.product
     );
-    productDoc = await thisDoc.constructor.setProductStockItemList(productDoc);
-
-    productDoc.save();
+    // set stockItems in product
+    productAttribueList.stockItems = stockItemList;
+    await Product.findByIdAndUpdate(thisDoc.product, productAttribueList);
+    //TODO:delete stockItem from carts
     next();
 });
 ////////////////////////////////////////////////////////////////
@@ -129,18 +126,18 @@ stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
     if (!doc) {
         return;
     }
-    let productDoc = await Product.findById(doc.product);
-    if (!productDoc) {
-        return;
-    }
-    productDoc = await doc.constructor.setProductAttributeList(
-        productDoc,
+    const productAttribueList = await doc.constructor.setProductAttributeList(
+        doc.product,
         'colors',
         'sizes'
     );
-    productDoc = await doc.constructor.setProductStockItemList(productDoc);
-
-    productDoc.save();
+    const stockItemList = await doc.constructor.setProductStockItemList(
+        doc.product
+    );
+    // set stockItems in product
+    productAttribueList.stockItems = stockItemList;
+    await Product.findByIdAndUpdate(doc.product, productAttribueList);
+    //TODO:edit stockItem in carts
 });
 
 const StockItem = mongoose.model('StockItem', stockItemSchema);
