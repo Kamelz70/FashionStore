@@ -33,7 +33,6 @@ exports.deleteAddress = handlerFactory.deleteOne(Address);
 exports.getMyAdresses = catchAsync(async (req, res, next) => {
     //use protect middleware in router to access user
     //find addresses in address list from user
-    //TODO: make parent referencing only with addresses or select -addresses
     let addresses = await Address.find({
         user: req.user.id,
     });

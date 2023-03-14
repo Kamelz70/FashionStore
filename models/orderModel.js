@@ -7,13 +7,11 @@ const Product = require('./productModel');
 const Address = require('./addressModel');
 const OrderItem = require('./orderItemModel');
 const User = require('./userModel');
-//TODO:remodel
+const Cart = require('./cartModel');
 const orderSchema = new mongoose.Schema({
-    // TODO: make middleware set it
-    totalAmount: {
+    totalOrderAmount: {
         type: Number,
         min: 0,
-        required: [true, 'An order must have a total amount'],
         max: 200000,
     },
     user: {
@@ -39,9 +37,7 @@ const orderSchema = new mongoose.Schema({
         },
         required: [true, 'An Order must have an address'],
     },
-    //TODO:remove date from request
     date: { type: Date, default: Date.now() },
-    // TODO: make phone system
     phoneNumber: {
         type: String,
     },
@@ -55,22 +51,8 @@ const orderSchema = new mongoose.Schema({
         {
             type: OrderItem.schema,
             //many Validators
-            validate: [
+            validate:
                 //validate if stockItem still exists
-                {
-                    validator: async function (item) {
-                        // check stockItem quantity
-                        const stockItem = await StockItem.findById(
-                            item.stockItem.id
-                        );
-                        if (!stockItem) {
-                            return false;
-                        }
-                        return true;
-                    },
-                    message: "stockItem id doesn't exist or quantity is more ",
-                },
-                //validate if item quantity is valid
                 {
                     validator: async function (item) {
                         // optimise to find stock item once
@@ -82,16 +64,48 @@ const orderSchema = new mongoose.Schema({
                         }
                         return true;
                     },
-                    message:
-                        'stockItem quantity is less than ordered quantity ',
+                    message: 'ordered quantity is more than stock ',
                 },
-            ],
         },
     ],
 });
-/////////////// Document middleware .save,.create
+//TODO: reset stockitems if price changed
+orderSchema.pre('save', async function (next) {
+    //to check in post middleware if it's new
+    this.wasNew = this.isNew;
+    //set order date
+    console.log('pre save order');
+    this.date = Date.now();
+    let amount = 0;
+    //set order amount
+    this.orderItems.forEach((item) => {
+        amount += item.totalAmount;
+    });
+    this.totalOrderAmount = amount;
+    console.log('total order amount:', amount);
 
+    next();
+});
 //////////////
+//FIXME:adding an available item when there's an empty another doen't work
+orderSchema.post('save', async function (doc) {
+    if (doc.wasNew) {
+        //set stockItem quantity
+        for (item in doc.orderItems) {
+            const stockItem = await StockItem.findById(
+                doc.orderItems[item].stockItem.id
+            );
+            //minus order item quantity
+            stockItem.quantity -= doc.orderItems[item].quantity;
+            stockItem.save({ validateBeforeSave: false });
+        }
+        //empty user cart
+        // get user and populate cart id
+        const user = await User.findById(doc.user).select('cart');
+        //save cart in an object
+        await Cart.findByIdAndUpdate(user.cart, { cartItems: [] });
+    }
+});
 //////////////////////////////////
 
 ////////////////////////////////////////////////////////////////

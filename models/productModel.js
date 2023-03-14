@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, 'A product must have a title'],
-        unique: true,
+        // unique: true,
         trim: true,
     },
     model: {
@@ -24,7 +24,6 @@ const productSchema = new mongoose.Schema({
         // required: [true, 'A product must have a description'],
     },
 
-    //TODO : Add images,
     sizes: [{ type: String, uppercase: true, trim: true }],
     colors: [{ type: String, uppercase: true, trim: true }],
     stockItems: [

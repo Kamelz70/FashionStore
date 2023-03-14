@@ -14,8 +14,10 @@ router.use(authController.protect);
 //after this point all router require admin role
 router.use(authController.restrictTo('admin'));
 
-router.route('/').get(stockItemController.getAllStockItems);
-router.route('/').post(stockItemController.createStockItem);
+router
+    .route('/')
+    .get(stockItemController.getAllStockItems)
+    .post(stockItemController.createStockItem);
 
 router
     .route('/:id')

@@ -10,7 +10,8 @@ router.use(authController.protect);
 router
     .route('/myCart')
     .get(cartController.getMyCart)
-    .post(cartController.addItemToCart);
+    .post(cartController.addItemToCart)
+    .delete(cartController.emptyCart);
 
 //after this point all router require admin role
 router.use(authController.restrictTo('admin'));
