@@ -5,6 +5,9 @@ const authController = require('../controllers/authController');
 const router = express.Router();
 //no authorization needed at this point
 router.route('/').get(productController.getAllProducts);
+
+// search has to be on top to avoid confusion with /:id
+router.route('/search').get(productController.searchProducts);
 router.route('/:id').get(productController.getProduct);
 //after this point all router need authorization
 router.use(authController.protect);
