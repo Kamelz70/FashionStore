@@ -4,8 +4,15 @@ const catchAsync = require('../utils/catchAsync');
 
 exports.getAll = (Model) =>
     catchAsync(async (req, res, next) => {
+        //for both routes (products/:productID/reveiws) and (/reviews) ((HACK))
+        let filter;
+        if (req.params.productID) {
+            filter = {
+                product: req.params.productID,
+            };
+        }
         // still needs pagination.....
-        features = new APIFeatures(Model.find({}), req.query)
+        features = new APIFeatures(Model.find(filter), req.query)
             .filter()
             .paginate()
             .sort()
@@ -61,6 +68,7 @@ exports.getOne = (Model, popOptions) =>
 exports.createOne = (Model) =>
     catchAsync(async (req, res, next) => {
         // still needs populate options implemented
+
         const doc = await Model.create(req.body);
         if (!doc) {
             return next(new AppError('no such document with ID found', 404));

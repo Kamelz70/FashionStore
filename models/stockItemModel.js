@@ -103,6 +103,7 @@ stockItemSchema.index({
 stockItemSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
     // query middleware getQuery gets query
     const thisDoc = await StockItem.findOne(this.getQuery());
+    //TODO:check if delete gets back a stock item with find
     if (!thisDoc) {
         return next();
     }
@@ -122,6 +123,7 @@ stockItemSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
     next();
 });
 ////////////////////////////////////////////////////////////////
+//TODO:check if this runs on delete
 stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
     if (!doc) {
         return;

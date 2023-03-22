@@ -1,8 +1,13 @@
 const express = require('express');
 const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('../routers/reviewRouter');
 
 const router = express.Router();
+
+router.use('/:productID/reviews', reviewRouter);
+// router.route("/:tourID/reviews").post(authController.protect, authController.restrictTo("user"), reviewController.createReview);
+
 //no authorization needed at this point
 router.route('/').get(productController.getAllProducts);
 

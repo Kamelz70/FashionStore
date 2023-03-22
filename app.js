@@ -6,7 +6,8 @@ const usersRouter = require('./routers/usersRouter');
 const productRouter = require('./routers/productRouter');
 const stockItemRouter = require('./routers/stockItemRouter');
 const addressRouter = require('./routers/addressRouter');
-const ordersRouter = require('./routers/orderRouter');
+const orderRouter = require('./routers/orderRouter');
+const reviewRouter = require('./routers/reviewRouter');
 const cartRouter = require('./routers/cartRouter');
 
 const testRouter = require('./routers/testRouter');
@@ -33,7 +34,8 @@ app.use('/api/v1/products', productRouter);
 app.use('/api/v1/stockItems', stockItemRouter);
 app.use('/api/v1/carts', cartRouter);
 app.use('/api/v1/addresses', addressRouter);
-app.use('/api/v1/orders', ordersRouter);
+app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/test', testRouter);
 
 app.all('*', (req, res) => {
