@@ -31,7 +31,7 @@ exports.placeOrder = catchAsync(async (req, res, next) => {
     //check if quantity is valid (done in model validate)
 
     //recreate order items in case cart items are outdated (optional extra measure)
-    const orderItems = cart.cartItems.forEach((item) => {
+    const orderItems = cart.cartItems.map((item) => {
         return new OrderItem({
             stockItem: { _id: item.stockItem.id },
             quantity: item.quantity || 1,
@@ -43,6 +43,7 @@ exports.placeOrder = catchAsync(async (req, res, next) => {
     if (!address) {
         return next(new AppError('address not found', 404));
     }
+    console.log(orderItems);
     const order = new Order({
         user: req.user.id,
         orderItems,

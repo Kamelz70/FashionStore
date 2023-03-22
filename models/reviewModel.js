@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const Product = require('./productModel');
 
-//review,rating,createdAt,ref:Tour,Ref:User
 const reviewSchema = new mongoose.Schema({
     review: {
         type: String,

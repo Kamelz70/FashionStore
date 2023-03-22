@@ -15,13 +15,11 @@ const orderItemSchema = new mongoose.Schema({
     },
     pricePerItem: {
         type: Number,
-        required: [true, 'an orderItem must have a pricePerItem'],
         min: 0,
         max: 200000,
     },
     totalAmount: {
         type: Number,
-        required: [true, 'an orderItem must have a totalAmount'],
         min: 0,
         max: 200000,
     },
@@ -61,7 +59,6 @@ const orderItemSchema = new mongoose.Schema({
             },
             createdAt: { type: Date, required: true },
         }),
-        required: [true, 'An Order Item must have a product parent'],
     },
 });
 /////////////// Document middleware .save,.create

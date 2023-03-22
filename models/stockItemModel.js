@@ -80,6 +80,7 @@ stockItemSchema.statics.setProductAttributeList = async function (
     return updateQueryValues;
     // await Product.findByIdAndUpdate(productId, updateQueryValues);
 };
+//FIXME:adding item to cart quantity has no restrictions
 
 //returns stockItem list for a product
 stockItemSchema.statics.setProductStockItemList = async function (productId) {
@@ -94,52 +95,35 @@ stockItemSchema.statics.setProductStockItemList = async function (productId) {
     return stockItemList;
     // await Product.findByIdAndUpdate(productId, updateQueryValues);
 };
-///////////////////////////     middleqare
+///////////////////////////     Middleware
 
 stockItemSchema.index({
     product: 1,
 });
-// Deleting a stockItem deletes its' ID from product parent
-stockItemSchema.pre(/([D|d]elete|[r]emove)/, async function (next) {
-    // query middleware getQuery gets query
-    const thisDoc = await StockItem.findOne(this.getQuery());
-    //TODO:check if delete gets back a stock item with find
-    if (!thisDoc) {
+stockItemSchema.pre(/(^findOneAnd)/, async function (next) {
+    this.thisDoc = await StockItem.findOne(this.getQuery());
+    if (!this.thisDoc) {
         return next();
     }
-    const productAttribueList =
-        await thisDoc.constructor.setProductAttributeList(
-            thisDoc.product,
-            'colors',
-            'sizes'
-        );
-    const stockItemList = await thisDoc.constructor.setProductStockItemList(
-        thisDoc.product
-    );
-    // set stockItems in product
-    productAttribueList.stockItems = stockItemList;
-    await Product.findByIdAndUpdate(thisDoc.product, productAttribueList);
-    //TODO:delete stockItem from carts
     next();
 });
 ////////////////////////////////////////////////////////////////
-//TODO:check if this runs on delete
 stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
-    if (!doc) {
+    if (!(doc || this.thisDoc)) {
         return;
     }
-    const productAttribueList = await doc.constructor.setProductAttributeList(
+    doc = this.thisDoc;
+    console.log(this);
+    const productAttribueList = await StockItem.setProductAttributeList(
         doc.product,
         'colors',
         'sizes'
     );
-    const stockItemList = await doc.constructor.setProductStockItemList(
-        doc.product
-    );
+    const stockItemList = await StockItem.setProductStockItemList(doc.product);
     // set stockItems in product
     productAttribueList.stockItems = stockItemList;
     await Product.findByIdAndUpdate(doc.product, productAttribueList);
-    //TODO:edit stockItem in carts
+    //TODO:edit stockItems in carts
 });
 
 const StockItem = mongoose.model('StockItem', stockItemSchema);

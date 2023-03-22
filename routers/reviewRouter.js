@@ -1,20 +1,27 @@
 const express = require('express');
 const reviewController = require('../controllers/reviewController');
 const authController = require('../controllers/authController');
-//TODO:reorganize authorization
 const router = express.Router({
     mergeParams: true,
 });
+//no authentication needed for get
+router.get(
+    '/',
+    //middleware if nested route
+    reviewController.setProductAndUser,
+    reviewController.getAllReviews
+);
 router.use(authController.protect);
-router
-    .route('/')
-    .get(reviewController.setProductAndUser, reviewController.getAllReviews)
-    .post(reviewController.setProductAndUser, reviewController.createReview);
-router.use(authController.restrictTo('user', 'admin'));
+router.post(
+    '/',
+    reviewController.setProductAndUser,
+    reviewController.createReview
+);
+// make review editible by owner only and deletible by admin and owner(in model)
 router
     .route('/:id')
-    .get(reviewController.getReviewById)
-    .delete(reviewController.deleteReview)
-    .patch(reviewController.updateReview);
+    .get(reviewController.verifyOwner, reviewController.getReviewById)
+    .delete(reviewController.verifyOwner, reviewController.deleteReview)
+    .patch(reviewController.verifyOwner, reviewController.updateReview);
 
 module.exports = router;

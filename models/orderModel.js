@@ -93,12 +93,10 @@ orderSchema.post('save', async function (doc) {
     if (doc.wasNew) {
         //set stockItem quantity
         for (item in doc.orderItems) {
-            const stockItem = await StockItem.findById(
-                doc.orderItems[item].stockItem.id
+            const stockItem = await StockItem.findByIdAndUpdate(
+                doc.orderItems[item].stockItem.id,
+                { $inc: { quantity: -doc.orderItems[item].quantity } }
             );
-            //minus order item quantity
-            stockItem.quantity -= doc.orderItems[item].quantity;
-            stockItem.save({ validateBeforeSave: false });
         }
         //empty user cart
         // get user and populate cart id

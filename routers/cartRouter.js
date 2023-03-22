@@ -10,7 +10,11 @@ router.use(authController.protect);
 router
     .route('/myCart')
     .get(cartController.getMyCart)
-    .post(cartController.addItemToCart)
+    .post(
+        //check if added item has zero quantity to remove is from cart
+        cartController.checkZeroQuantityAndSetCart,
+        cartController.addItemToCart
+    )
     .delete(cartController.emptyCart);
 
 //after this point all router require admin role

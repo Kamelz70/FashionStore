@@ -54,7 +54,7 @@ const productSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now() },
 });
 /////////////// Document middleware .save,.create
-//TODO:implement text search
+
 productSchema.index({
     title: 'text',
     description: 'text',

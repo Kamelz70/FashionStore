@@ -34,9 +34,15 @@ const cartSchema = new mongoose.Schema({
         },
     },
 });
-//TODO:calc total cart Amount
 /////////////// Document middleware .save,.create
-
+cartSchema.pre('save', async function (next) {
+    //if item isn't new, don't validate
+    this.totalAmount = 0;
+    this.cartItems.forEach((item) => {
+        this.totalAmount += item.totalAmount;
+    });
+    next();
+});
 //////////////
 //////////////////////////////////
 

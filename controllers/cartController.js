@@ -5,7 +5,37 @@ const AppError = require('../utils/appError');
 const StockItem = require('../models/stockItemModel');
 const Product = require('../models/productModel');
 const OrderItem = require('../models/orderItemModel');
+///////////////////////////////// Middleware
+exports.checkZeroQuantityAndSetCart = catchAsync(async (req, res, next) => {
+    req.cart = await Cart.findById(req.user.cart);
+    if (!req.cart) {
+        return next(new AppError('cart ID not found', 404));
+    }
+    // if no quantity specified, continue to add item
+    if (!req.body.quantity) {
+        return next();
+    }
+    //if quantity isn't a number, retuen error
+    if (isNaN(req.body.quantity)) {
+        return next(new AppError("specified quantity isn't a number", 400));
+    }
+    if (req.body.quantity > 0) {
+        //if request quantity is more than one, next and don't remove item
+        return next();
+    }
 
+    //check where item is and remove it from cart
+    for (const itemIndex in req.cart.cartItems) {
+        if (req.cart.cartItems[itemIndex].stockItem.id == req.body.stockItem) {
+            req.cart.cartItems.splice(itemIndex, 1);
+            await req.cart.save({ validateBeforeSave: false });
+            return res.status(200).json({ status: 'success', data: req.cart });
+        }
+    }
+    //do nothing and respond if item isn't found
+    return res.status(200).json({ status: 'success', data: req.cart });
+});
+///////////////////////////////// request handlers
 exports.getAllCarts = handlerFactory.getAll(Cart);
 exports.getCart = handlerFactory.getOne(Cart);
 exports.getMyCart = catchAsync(async (req, res, next) => {
@@ -20,11 +50,6 @@ exports.getMyCart = catchAsync(async (req, res, next) => {
 });
 
 exports.addItemToCart = catchAsync(async (req, res, next) => {
-    let cart = await Cart.findById(req.user.cart);
-    //if cart not found
-    if (!cart) {
-        return next(new AppError('cart ID not found', 404));
-    }
     const stockItem = await StockItem.findById(req.body.stockItem);
     //check if stockItem id exists
     if (!stockItem) {
@@ -38,20 +63,18 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
     }
     // check if req.body.stockItem exists
     //if item already exists in cart
-    for (const item in cart.cartItems) {
-        if (cart.cartItems[item].stockItem.id == req.body.stockItem) {
-            cart.cartItems[item].stockItem = stockItem;
+    for (const item in req.cart.cartItems) {
+        if (req.cart.cartItems[item].stockItem.id == req.body.stockItem) {
+            req.cart.cartItems[item].stockItem = stockItem;
             // if req.body has a quantity field, edit
-            // TODO:check if quantity is a number
             if (req.body.quantity) {
-                cart.cartItems[item].quantity = req.body.quantity;
+                req.cart.cartItems[item].quantity = req.body.quantity;
             } else {
-                cart.cartItems[item].quantity++;
+                req.cart.cartItems[item].quantity++;
             }
             //else save new quantity
-            //TODO:fix validation
-            await cart.save({ validateBeforeSave: false });
-            return res.status(200).json({ status: 'success', data: cart });
+            await req.cart.save({ validateBeforeSave: false });
+            return res.status(200).json({ status: 'success', data: req.cart });
         }
     }
 
@@ -60,9 +83,9 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
         stockItem: { _id: stockItem.id },
         quantity: req.body.quantity || 1,
     });
-    cart.cartItems.push(orderItem);
-    await cart.save({ validateBeforeSave: false });
-    res.status(201).json({ status: 'success', data: cart });
+    req.cart.cartItems.push(orderItem);
+    await req.cart.save({ validateBeforeSave: false });
+    res.status(201).json({ status: 'success', data: req.cart });
     // use cartID, orderID,
 });
 
