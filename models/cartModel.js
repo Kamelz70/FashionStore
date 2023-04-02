@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
-const User = require('./userModel');
 const OrderItem = require('./orderItemModel');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const StockItem = require('./stockItemModel');
 const cartSchema = new mongoose.Schema({
     cartItems: [{ type: OrderItem.schema, default: [] }],
     totalAmount: {
@@ -17,21 +15,21 @@ const cartSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        validate: {
-            validator: async function (value) {
-                // if no mods done to user, return
-                if (!this.isModified('user')) {
-                    return true;
-                }
-                // else check user
-                const user = await User.findById(value);
-                if (!user) {
-                    return false;
-                }
-                return true;
-            },
-            message: "user id doesn't exist",
-        },
+        // validate: {
+        //     validator: async function (value) {
+        //         // if no mods done to user, return
+        //         if (!this.isModified('user')) {
+        //             return true;
+        //         }
+        //         // else check user
+        //         const user = await User.findById(value);
+        //         if (!user) {
+        //             return false;
+        //         }
+        //         return true;
+        //     },
+        //     message: "user id doesn't exist",
+        // },
     },
 });
 /////////////// Document middleware .save,.create

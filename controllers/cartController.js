@@ -28,7 +28,7 @@ exports.checkZeroQuantityAndSetCart = catchAsync(async (req, res, next) => {
     for (const itemIndex in req.cart.cartItems) {
         if (req.cart.cartItems[itemIndex].stockItem.id == req.body.stockItem) {
             req.cart.cartItems.splice(itemIndex, 1);
-            await req.cart.save({ validateBeforeSave: false });
+            await req.cart.save();
             return res.status(200).json({ status: 'success', data: req.cart });
         }
     }
@@ -73,7 +73,7 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
                 req.cart.cartItems[item].quantity++;
             }
             //else save new quantity
-            await req.cart.save({ validateBeforeSave: false });
+            await req.cart.save();
             return res.status(200).json({ status: 'success', data: req.cart });
         }
     }
@@ -84,7 +84,7 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
         quantity: req.body.quantity || 1,
     });
     req.cart.cartItems.push(orderItem);
-    await req.cart.save({ validateBeforeSave: false });
+    await req.cart.save();
     res.status(201).json({ status: 'success', data: req.cart });
     // use cartID, orderID,
 });
@@ -97,7 +97,7 @@ exports.emptyCart = catchAsync(async (req, res, next) => {
     }
 
     cart.cartItems = [];
-    await cart.save({ validateBeforeSave: false });
+    await cart.save();
     res.status(200).json({ status: 'success', data: cart });
     // use cartID, orderID,
 });

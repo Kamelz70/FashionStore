@@ -8,6 +8,7 @@ const Address = require('./addressModel');
 const OrderItem = require('./orderItemModel');
 const User = require('./userModel');
 const Cart = require('./cartModel');
+const Payment = require('./paymentModel');
 const orderSchema = new mongoose.Schema({
     totalOrderAmount: {
         type: Number,
@@ -68,43 +69,51 @@ const orderSchema = new mongoose.Schema({
                 },
         },
     ],
+    payment: {
+        type: Payment.schema,
+    },
 });
 orderSchema.pre('save', async function (next) {
     //to check in post middleware if it's new
-    this.wasNew = this.isNew;
-    //set order date
-    console.log('pre save order');
-    if (this.isNew) {
-        this.createdAt = Date.now();
-    }
-    let amount = 0;
-    //set order amount
-    this.orderItems.forEach((item) => {
-        amount += item.totalAmount;
-    });
-    this.totalOrderAmount = amount;
-    console.log('total order amount:', amount);
+    // this.wasNew = this.isNew;
 
+    //TODO:runvalidators not working, unsafe operation
+    if (this.isNew) {
+        //set order date and payment
+        this.createdAt = Date.now();
+        //set order amount
+        // ////////
+        let amount = 0;
+        this.orderItems.forEach((item) => {
+            amount += item.totalAmount;
+        });
+        this.totalOrderAmount = amount;
+        // ////////
+        if (!this.payment) {
+            this.payment = new Payment();
+        }
+        this.payment.amount = amount;
+        this.payment.user = this.user;
+
+        //set stockItem quantity
+        for (item in this.orderItems) {
+            const stockItem = await StockItem.findByIdAndUpdate(
+                this.orderItems[item].stockItem.id,
+                { $inc: { quantity: -this.orderItems[item].quantity } },
+                { new: true, runValidators: true }
+            );
+            console.log('stockItem:', stockItem);
+        }
+        // get user and populate cart id
+        const user = await User.findById(this.user).select('cart');
+        //empty user cart
+        // await Cart.findByIdAndUpdate(user.cart, { cartItems: [] });
+    }
     next();
 });
 //////////////
 //FIXME:adding an available item when there's an empty another doen't work
-orderSchema.post('save', async function (doc) {
-    if (doc.wasNew) {
-        //set stockItem quantity
-        for (item in doc.orderItems) {
-            const stockItem = await StockItem.findByIdAndUpdate(
-                doc.orderItems[item].stockItem.id,
-                { $inc: { quantity: -doc.orderItems[item].quantity } }
-            );
-        }
-        //empty user cart
-        // get user and populate cart id
-        const user = await User.findById(doc.user).select('cart');
-        //save cart in an object
-        await Cart.findByIdAndUpdate(user.cart, { cartItems: [] });
-    }
-});
+// orderSchema.post('save', async function (doc) {});
 //////////////////////////////////
 
 ////////////////////////////////////////////////////////////////

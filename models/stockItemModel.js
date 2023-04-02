@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const Product = require('./productModel');
 const AppError = require('../utils/appError');
+const Cart = require('./cartModel');
 ///////////////////////////     Schema
 const stockItemSchema = new mongoose.Schema({
     //amount: virtual
@@ -12,6 +13,21 @@ const stockItemSchema = new mongoose.Schema({
         default: 1,
         min: 0,
         max: 200000,
+        validate: {
+            validator: async function (quantity) {
+                // if no mods done to product, return
+
+                // if (!this.isModified('quantity')) {
+                //     return true;
+                // }
+                // else check product
+                if (quantity < 0) {
+                    return false;
+                }
+                return true;
+            },
+            message: "stock quantity can't be less than 0",
+        },
     },
     size: { type: String, uppercase: true },
     color: { type: String, uppercase: true },
@@ -39,6 +55,20 @@ const stockItemSchema = new mongoose.Schema({
         type: Number,
         min: 0,
         max: 200000,
+        validate: {
+            validator: async function (value) {
+                // if no mods done to product, return
+                if (!this.isModified('price')) {
+                    return true;
+                }
+                // else check product
+                if (quantity < 0) {
+                    return false;
+                }
+                return true;
+            },
+            message: "price can't be less than 0",
+        },
     },
 });
 ///////////////////////////     static methods
@@ -80,7 +110,6 @@ stockItemSchema.statics.setProductAttributeList = async function (
     return updateQueryValues;
     // await Product.findByIdAndUpdate(productId, updateQueryValues);
 };
-//FIXME:adding item to cart quantity has no restrictions
 
 //returns stockItem list for a product
 stockItemSchema.statics.setProductStockItemList = async function (productId) {
@@ -113,7 +142,6 @@ stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
         return;
     }
     doc = this.thisDoc;
-    console.log(this);
     const productAttribueList = await StockItem.setProductAttributeList(
         doc.product,
         'colors',
@@ -124,6 +152,9 @@ stockItemSchema.post(/(^findOneAnd|save)/, async function (doc) {
     productAttribueList.stockItems = stockItemList;
     await Product.findByIdAndUpdate(doc.product, productAttribueList);
     //TODO:edit stockItems in carts
+    // let carts = await Cart.find({ 'cartItems.stockItem.id': doc.id });
+    // let carts = await Cart.find();
+    // console.log(carts);
 });
 
 const StockItem = mongoose.model('StockItem', stockItemSchema);

@@ -9,6 +9,7 @@ const addressRouter = require('./routers/addressRouter');
 const orderRouter = require('./routers/orderRouter');
 const reviewRouter = require('./routers/reviewRouter');
 const cartRouter = require('./routers/cartRouter');
+const collectionRouter = require('./routers/collectionRouter');
 
 const testRouter = require('./routers/testRouter');
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/v1/carts', cartRouter);
 app.use('/api/v1/addresses', addressRouter);
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/collections', collectionRouter);
 app.use('/api/v1/test', testRouter);
 
 app.all('*', (req, res) => {

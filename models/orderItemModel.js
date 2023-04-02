@@ -64,10 +64,9 @@ const orderItemSchema = new mongoose.Schema({
 /////////////// Document middleware .save,.create
 orderItemSchema.pre('save', async function (next) {
     //if item isn't new, don't validate
-
     //validate stockItem
     const stockItem = await StockItem.findById(this.stockItem.id).select(
-        '_id size color product price'
+        '_id size color product price quantity'
     );
     if (!stockItem) {
         return next(new AppError("stockItem parent id doesn't exist", 404));
@@ -84,15 +83,20 @@ orderItemSchema.pre('save', async function (next) {
         return next(
             new AppError(
                 `Can't add item,no items left in stock
-        `,
+                `,
                 409
             )
         );
     }
     // check if new quatity is larger than stock
     if (stockItem.quantity < this.quantity) {
-        // set quantity same as stock
-        this.quantity = stockItem.quantity;
+        return next(
+            new AppError(
+                `Can't add this quantity, stock only has ${stockItem.quantity} items left
+        `,
+                409
+            )
+        );
     }
     //set fields
     this.pricePerItem = stockItem.price || product.price;
